@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/qr_overlay"
+    android:id="@+id/qr_overlay_root"
     android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="500dp">
+    android:layout_height="240dip"
+    android:layout_width="match_parent">
 
     <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        app:srcCompat="@drawable/baby_apuapustaja" />
+        android:id="@+id/qr_overlay_image"
+        android:layout_width="139dip"
+        android:layout_height="139dip"
+        android:layout_gravity="center"
+        android:layout_margin="5.0dip"
+        android:layout_centerHorizontal="true"
+        app:srcCompat="@drawable/jasmine_qr_code" />
 
 
-</LinearLayout>
+</RelativeLayout>
