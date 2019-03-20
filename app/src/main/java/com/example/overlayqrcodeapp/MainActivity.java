@@ -1,5 +1,18 @@
 package com.example.overlayqrcodeapp;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.projection.MediaProjection;
+import android.media.projection.MediaProjectionManager;
+import android.os.Build;
+import android.os.Environment;
+import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,50 +25,84 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Optional;
+
+import static android.Manifest.permission.SYSTEM_ALERT_WINDOW;
+
 public class MainActivity extends AppCompatActivity {
 
     private String DEBUG_TAG="Action: ";
+    private String TAG = "Screenshot Tag: ";
+    private static final int PERMISSION_REQUEST_CODE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        checkCanDrawOverlays();
     }
 
     protected void onPause() {
         super.onPause();
+        //checkCanDrawOverlays();
+        /*
         try {
             Thread.sleep(5000);
         } catch (InterruptedException ie) {
             ie.printStackTrace();
         }
+        */
         for (int i =0; i < 5; i++) {
-            doBackgroundToast();
+            //doBackgroundToast();
         }
     }
 
+    public void checkCanDrawOverlays(){
+        if (Build.VERSION.SDK_INT >= 23) {
+            if(!Settings.canDrawOverlays(this)) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+                startActivityForResult(intent,0);
+            }
+            else{
+                requestCapturePermission();
+            }
+        }
+    }
+
+    private void requestCapturePermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return;
+        }
+
+        MediaProjectionManager mediaProjectionManager = (MediaProjectionManager)
+                getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+        Intent it = mediaProjectionManager.createScreenCaptureIntent();
+        startActivityForResult(it, 1);
+    }
+
     @Override
-    public boolean onTouchEvent(MotionEvent  event) {
-        int action = MotionEventCompat.getActionMasked(event);
-        switch(action) {
-            case (MotionEvent.ACTION_DOWN):
-                Log.d(DEBUG_TAG, "Action was DOWN");
-                return true;
-            case (MotionEvent.ACTION_MOVE):
-                Log.d(DEBUG_TAG, "Action was MOVE");
-                return true;
-            case (MotionEvent.ACTION_UP):
-                Log.d(DEBUG_TAG, "Action was UP");
-                return true;
-            case (MotionEvent.ACTION_CANCEL):
-                Log.d(DEBUG_TAG, "Action was CANCEL");
-                return true;
-            case (MotionEvent.ACTION_OUTSIDE):
-                Log.d(DEBUG_TAG, "Movement occurred outside bounds " +
-                        "of current screen element");
-                return true;
-            default:
-                return super.onTouchEvent(event);
+    protected void onActivityResult(int requestCode, int resultCode, Intent it) {
+        super.onActivityResult(requestCode, resultCode, it);
+
+        switch (requestCode) {
+            case 0:
+                if(resultCode == RESULT_OK){
+                    requestCapturePermission();
+                }
+                break;
+            case 1:
+                if (resultCode == RESULT_OK && it != null) {
+                    ScreenShotService.setResultIntent(it);
+                    startService(new Intent(getApplicationContext(), ScreenShotService.class));
+                }
+
+                break;
+
         }
     }
 
