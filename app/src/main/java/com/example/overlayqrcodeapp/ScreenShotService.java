@@ -93,7 +93,6 @@ public class ScreenShotService extends Service{
         igv = new ImageView(this);
         igv.setImageResource(R.mipmap.ic_launcher);
 
-
         params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -184,9 +183,12 @@ public class ScreenShotService extends Service{
             File fileImage;
             if (bitmap != null) {
                 try {
+                    /*
                     String fileName = String.format(Locale.getDefault(), "debug_screenshot_%s.jpg",
                             new SimpleDateFormat("yyyyMMdd_HHmmssSSS", Locale.getDefault())
                                     .format(new Date(System.currentTimeMillis())));
+                                    */
+                    String fileName = "Screenshot.jpg";
                     fileImage = new File(Environment.getExternalStoragePublicDirectory(
                             Environment.DIRECTORY_PICTURES), fileName);
                     Log.d(TAG, fileName);

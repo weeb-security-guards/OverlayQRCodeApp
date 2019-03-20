@@ -18,12 +18,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Layout;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.barcode.Barcode;
+import com.google.android.gms.vision.barcode.BarcodeDetector;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -49,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
     protected void onPause() {
         super.onPause();
+        checkForQRCode();
         //checkCanDrawOverlays();
         /*
         try {
@@ -100,9 +106,28 @@ public class MainActivity extends AppCompatActivity {
                     ScreenShotService.setResultIntent(it);
                     startService(new Intent(getApplicationContext(), ScreenShotService.class));
                 }
-
                 break;
 
+        }
+    }
+
+    private void checkForQRCode() {
+        String filePath = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES) + "/Screenshot.jpg";
+        Bitmap bitmap = BitmapFactory.decodeFile(filePath);
+        Log.d("Directory: ", filePath);
+
+        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(getApplicationContext())
+                .setBarcodeFormats(Barcode.QR_CODE)
+                .build();
+
+        Frame frame = new Frame.Builder().setBitmap(bitmap).build();
+        SparseArray<Barcode> barcodes = barcodeDetector.detect(frame);
+
+        if (barcodes.size() != 0) {
+            Log.d("QR URL is : ", barcodes.valueAt(0).displayValue);
+        } else {
+            Log.d("QR URL is : ", "No QR URL detected");
         }
     }
 
