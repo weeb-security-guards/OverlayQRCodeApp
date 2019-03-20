@@ -8,8 +8,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -30,12 +32,9 @@ import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static android.Manifest.permission.SYSTEM_ALERT_WINDOW;
 
@@ -45,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
     private String TAG = "Screenshot Tag: ";
     private static final int PERMISSION_REQUEST_CODE = 1;
 
+    private Handler handler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,20 +53,34 @@ public class MainActivity extends AppCompatActivity {
         checkCanDrawOverlays();
     }
 
-    protected void onPause() {
-        super.onPause();
-        checkForQRCode();
+    protected void onStop() {
+        super.onStop();
         //checkCanDrawOverlays();
+
         /*
+        new Timer().scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (checkForQRCode()) {
+                    doBackgroundToast();
+                    cancel();
+                }
+            }
+        },500,5000);
+        */
         try {
             Thread.sleep(5000);
         } catch (InterruptedException ie) {
             ie.printStackTrace();
         }
-        */
-        for (int i =0; i < 5; i++) {
-            //doBackgroundToast();
+
+
+        if (checkForQRCode()) {
+            for (int i =0; i < 10; i++) {
+                doBackgroundToast();
+            }
         }
+
     }
 
     public void checkCanDrawOverlays(){
@@ -73,22 +88,20 @@ public class MainActivity extends AppCompatActivity {
             if(!Settings.canDrawOverlays(this)) {
                 Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
                 startActivityForResult(intent,0);
-            }
-            else{
+            } else {
                 requestCapturePermission();
             }
         }
     }
 
     private void requestCapturePermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            return;
-        }
-
         MediaProjectionManager mediaProjectionManager = (MediaProjectionManager)
                 getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         Intent it = mediaProjectionManager.createScreenCaptureIntent();
+        it.addFlags(Intent.FLAG_FROM_BACKGROUND);
+        it.setAction(Intent.ACTION_USER_BACKGROUND);
         startActivityForResult(it, 1);
+        //moveTaskToBack(true);
     }
 
     @Override
@@ -111,27 +124,33 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void checkForQRCode() {
+    private BarcodeDetector barcodeDetector = null;
+    private Frame frame = null;
+    private SparseArray<Barcode> barcodes = null;
+
+    public boolean checkForQRCode()  {
+
         String filePath = Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES) + "/Screenshot.jpg";
         Bitmap bitmap = BitmapFactory.decodeFile(filePath);
         Log.d("Directory: ", filePath);
 
-        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(getApplicationContext())
+        barcodeDetector = new BarcodeDetector.Builder(getApplicationContext())
                 .setBarcodeFormats(Barcode.QR_CODE)
                 .build();
-
-        Frame frame = new Frame.Builder().setBitmap(bitmap).build();
-        SparseArray<Barcode> barcodes = barcodeDetector.detect(frame);
+        frame = new Frame.Builder().setBitmap(bitmap).build();
+        barcodes = barcodeDetector.detect(frame);
 
         if (barcodes.size() != 0) {
             Log.d("QR URL is : ", barcodes.valueAt(0).displayValue);
+            return true;
         } else {
             Log.d("QR URL is : ", "No QR URL detected");
         }
+        return false;
     }
 
-    private void doBackgroundToast() {
+    public void doBackgroundToast() {
         LayoutInflater inflater = getLayoutInflater();
         View layout = inflater.inflate(R.layout.qr_overlay_toast,
                 (ViewGroup) findViewById(R.id.qr_overlay_root));

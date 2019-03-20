@@ -51,6 +51,7 @@ public class ScreenShotService extends Service{
 
     private ImageReader imageReader;
     private Handler handler;
+    private ImageView igv = null;
 
     public ScreenShotService() {
 
@@ -73,7 +74,6 @@ public class ScreenShotService extends Service{
     }
 
     private WindowManager windowManager =null;
-    private ImageView igv = null;
     private WindowManager.LayoutParams params;
 
     private int screenWidth, screenHeight, screenDensity;
@@ -103,6 +103,7 @@ public class ScreenShotService extends Service{
         params.gravity = Gravity.TOP | Gravity.LEFT;
         params.x = 0;
         params.y = screenHeight/4;
+        igv.setImageAlpha(10);
 
         igv.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -125,7 +126,8 @@ public class ScreenShotService extends Service{
 
     public void initMediaProjection(){
 
-        MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+        MediaProjectionManager mediaProjectionManager = (MediaProjectionManager)
+                getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         mediaProjection = mediaProjectionManager.getMediaProjection(Activity.RESULT_OK, resultIntent);
 
         virtualDisplay = mediaProjection.createVirtualDisplay("screen-mirror",
@@ -150,7 +152,6 @@ public class ScreenShotService extends Service{
     }
 
     private void startCapture() {
-
         Image image = imageReader.acquireLatestImage();
         new SaveTask().execute(image);
     }
