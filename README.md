@@ -1,1 +1,1 @@
-"# OverlayQRCodeApp" 
+# OverlayQRCodeApp
