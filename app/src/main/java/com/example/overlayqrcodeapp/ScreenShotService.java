@@ -5,6 +5,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
@@ -18,9 +19,11 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.v4.os.AsyncTaskCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -34,6 +37,10 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.barcode.Barcode;
+import com.google.android.gms.vision.barcode.BarcodeDetector;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -42,6 +49,7 @@ import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.prefs.BackingStoreException;
 
 public class ScreenShotService extends Service{
 
@@ -54,6 +62,7 @@ public class ScreenShotService extends Service{
 
     private ImageReader imageReader;
     private Handler handler;
+    private Handler toastHandler;
     private ImageView igv = null;
 
     public ScreenShotService() {
@@ -121,6 +130,7 @@ public class ScreenShotService extends Service{
 
     public void initHandler(){
         handler = new Handler();
+        toastHandler = new Handler();
     }
 
     public void createImageReader() {
@@ -157,7 +167,6 @@ public class ScreenShotService extends Service{
     private void startCapture() {
         Image image = imageReader.acquireLatestImage();
         new SaveTask().execute(image);
-        doBackgroundToast();
         Log.d("Background toast: ", "Toasted");
     }
 
@@ -205,6 +214,15 @@ public class ScreenShotService extends Service{
                         out.close();
                         success = true;
                         Log.d(TAG, "Saved: " + fileName);
+                        if (checkForQRCode()) {
+                            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    for (int i = 0 ; i < 30; i ++)
+                                        doBackgroundToast();
+                                }
+                            });
+                        }
                     }
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
@@ -231,7 +249,22 @@ public class ScreenShotService extends Service{
         }
     }
 
-    public void doBackgroundToast() {
+    private boolean doBackgroundToast() {
+        View layout = setUpToastOverlay();
+        Toast toast = null;
+        try {
+            toast = new Toast(getApplicationContext());
+        } catch (NullPointerException npe) {
+            return false;
+        }
+        toast.setGravity(Gravity.CENTER, 0,0);
+        toast.setDuration(Toast.LENGTH_LONG);
+        toast.setView(layout);
+        toast.show();
+        return true;
+    }
+
+    private View setUpToastOverlay() {
         View layout = new LinearLayout(getApplicationContext());
         ((LinearLayout) layout).setOrientation(LinearLayout.VERTICAL);
         layout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -244,10 +277,28 @@ public class ScreenShotService extends Service{
         lparams.setMargins(5,5,5,5);
         qrCodeOverlayImage.setLayoutParams(lparams);
         ((LinearLayout) layout).addView(qrCodeOverlayImage);
-        Toast toast = new Toast(getApplicationContext());
-        toast.setGravity(Gravity.CENTER, 0,0);
-        toast.setDuration(Toast.LENGTH_LONG);
-        toast.setView(layout);
-        toast.show();
+        return layout;
+    }
+
+    public boolean checkForQRCode()  {
+
+        String filePath = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES) + "/Screenshot.jpg";
+        Bitmap bitmap = BitmapFactory.decodeFile(filePath);
+        Log.d("Directory: ", filePath);
+
+        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(getApplicationContext())
+                .setBarcodeFormats(Barcode.QR_CODE)
+                .build();
+        Frame frame = new Frame.Builder().setBitmap(bitmap).build();
+        SparseArray<Barcode> barcodes = barcodeDetector.detect(frame);
+
+        if (barcodes.size() != 0) {
+            Log.d("QR URL is : ", barcodes.valueAt(0).displayValue);
+            return true;
+        } else {
+            Log.d("QR URL is : ", "No QR URL detected");
+        }
+        return false;
     }
 }

@@ -139,44 +139,6 @@ public class MainActivity extends AppCompatActivity {
                     startService(new Intent(getApplicationContext(), ScreenShotService.class));
                 }
                 break;
-
         }
-    }
-
-    private BarcodeDetector barcodeDetector = null;
-    private Frame frame = null;
-    private SparseArray<Barcode> barcodes = null;
-
-    public boolean checkForQRCode()  {
-
-        String filePath = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES) + "/Screenshot.jpg";
-        Bitmap bitmap = BitmapFactory.decodeFile(filePath);
-        Log.d("Directory: ", filePath);
-
-        barcodeDetector = new BarcodeDetector.Builder(getApplicationContext())
-                .setBarcodeFormats(Barcode.QR_CODE)
-                .build();
-        frame = new Frame.Builder().setBitmap(bitmap).build();
-        barcodes = barcodeDetector.detect(frame);
-
-        if (barcodes.size() != 0) {
-            Log.d("QR URL is : ", barcodes.valueAt(0).displayValue);
-            return true;
-        } else {
-            Log.d("QR URL is : ", "No QR URL detected");
-        }
-        return false;
-    }
-
-    public void doBackgroundToast() {
-        LayoutInflater inflater = getLayoutInflater();
-        View layout = inflater.inflate(R.layout.qr_overlay_toast,
-                (ViewGroup) findViewById(R.id.qr_overlay_root));
-        Toast toast = new Toast(getApplicationContext());
-        toast.setGravity(Gravity.CENTER, 0,0);
-        toast.setDuration(Toast.LENGTH_LONG);
-        toast.setView(layout);
-        toast.show();
     }
 }
