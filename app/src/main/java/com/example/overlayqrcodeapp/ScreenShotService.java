@@ -238,7 +238,7 @@ public class ScreenShotService extends Service{
                 240));
         ImageView qrCodeOverlayImage = new ImageView(getApplicationContext());
         qrCodeOverlayImage.setImageResource(R.drawable.jasmine_qr_code);
-        RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(139, 139);
+        RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(560, 560);
         lparams.addRule(RelativeLayout.CENTER_HORIZONTAL);
         lparams.addRule(Gravity.CENTER);
         lparams.setMargins(5,5,5,5);
