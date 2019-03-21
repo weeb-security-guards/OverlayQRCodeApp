@@ -23,12 +23,15 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import java.io.File;
@@ -154,6 +157,8 @@ public class ScreenShotService extends Service{
     private void startCapture() {
         Image image = imageReader.acquireLatestImage();
         new SaveTask().execute(image);
+        doBackgroundToast();
+        Log.d("Background toast: ", "Toasted");
     }
 
     public class SaveTask extends AsyncTask<Image, Void, Boolean> {
@@ -224,5 +229,25 @@ public class ScreenShotService extends Service{
             igv.setVisibility(View.VISIBLE);
 
         }
+    }
+
+    public void doBackgroundToast() {
+        View layout = new LinearLayout(getApplicationContext());
+        ((LinearLayout) layout).setOrientation(LinearLayout.VERTICAL);
+        layout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                240));
+        ImageView qrCodeOverlayImage = new ImageView(getApplicationContext());
+        qrCodeOverlayImage.setImageResource(R.drawable.jasmine_qr_code);
+        RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(139, 139);
+        lparams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        lparams.addRule(Gravity.CENTER);
+        lparams.setMargins(5,5,5,5);
+        qrCodeOverlayImage.setLayoutParams(lparams);
+        ((LinearLayout) layout).addView(qrCodeOverlayImage);
+        Toast toast = new Toast(getApplicationContext());
+        toast.setGravity(Gravity.CENTER, 0,0);
+        toast.setDuration(Toast.LENGTH_LONG);
+        toast.setView(layout);
+        toast.show();
     }
 }

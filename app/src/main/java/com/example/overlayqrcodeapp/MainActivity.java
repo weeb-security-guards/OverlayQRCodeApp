@@ -33,9 +33,12 @@ import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.SYSTEM_ALERT_WINDOW;
 
 public class MainActivity extends AppCompatActivity {
@@ -44,12 +47,17 @@ public class MainActivity extends AppCompatActivity {
     private String TAG = "Screenshot Tag: ";
     private static final int PERMISSION_REQUEST_CODE = 1;
 
+    private String[] permissionList = {Manifest.permission.READ_EXTERNAL_STORAGE,
+                                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                        Manifest.permission.SYSTEM_ALERT_WINDOW};
+
     private Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        checkPermissions();
         checkCanDrawOverlays();
     }
 
@@ -67,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         },500,5000);
-        */
+
         try {
             Thread.sleep(5000);
         } catch (InterruptedException ie) {
@@ -80,7 +88,18 @@ public class MainActivity extends AppCompatActivity {
                 doBackgroundToast();
             }
         }
+        */
+    }
 
+    private void checkPermissions() {
+        ArrayList<String> noPermissions = new ArrayList<String>();
+        for (int i =0; i < permissionList.length; i++) {
+            if (checkSelfPermission(permissionList[i]) != PackageManager.PERMISSION_GRANTED) {
+                noPermissions.add(permissionList[i]);
+            }
+        }
+        requestPermissions(Arrays.copyOf(noPermissions.toArray(), noPermissions.size(),
+                String[].class), 101);
     }
 
     public void checkCanDrawOverlays(){
